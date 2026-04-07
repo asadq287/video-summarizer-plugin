@@ -1,0 +1,18 @@
+[project]
+name = "video-summarizer-mcp"
+version = "1.0.0"
+description = "MCP server that downloads and transcribes Instagram Reels & YouTube videos, extracting key lessons and actionable steps"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.26.0",
+    "yt-dlp",
+    "faster-whisper",
+    "google-genai",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["downloader", "transcriber"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
