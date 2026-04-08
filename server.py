@@ -6,9 +6,22 @@ and actionable steps.
 """
 
 import os
+import pathlib
 import tempfile
 import uuid
 import concurrent.futures
+
+# Load .env from the project root before anything reads env vars
+_env_path = pathlib.Path(__file__).parent / ".env"
+if _env_path.exists():
+    for line in _env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip()
+        if key and value:
+            os.environ.setdefault(key, value)
 
 from mcp.server.fastmcp import FastMCP
 

@@ -9,7 +9,7 @@ import time
 
 from google import genai
 
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 TRANSCRIPTION_PROMPT = (
     "Transcribe all spoken words in this video verbatim. "
@@ -43,8 +43,11 @@ def transcribe_video(video_path: str) -> str:
     try:
         uploaded_file = client.files.upload(file=video_path)
 
-        # Wait for Gemini to finish processing the video
+        # Wait for Gemini to finish processing the video (max 120s)
+        deadline = time.monotonic() + 120
         while uploaded_file.state.name == "PROCESSING":
+            if time.monotonic() > deadline:
+                raise RuntimeError("Gemini file processing timed out after 120s")
             time.sleep(2)
             uploaded_file = client.files.get(name=uploaded_file.name)
 

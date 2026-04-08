@@ -2,10 +2,7 @@
   "mcpServers": {
     "video-summarizer": {
       "command": "uv",
-      "args": ["run", "server.py"],
-      "env": {
-        "GEMINI_API_KEY": ""
-      }
+      "args": ["run", "server.py"]
     }
   }
 }
