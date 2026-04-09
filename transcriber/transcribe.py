@@ -17,8 +17,9 @@ _model: WhisperModel | None = None
 TRANSCRIBE_TIMEOUT = 300  # 5 minutes max for transcription
 
 
-MODELS_DIR = os.path.join(
-    os.path.expanduser("~"), ".cache", "claude-plugins", "video-summarizer", "models"
+MODELS_DIR = os.environ.get(
+    "WHISPER_MODELS_DIR",
+    os.path.join(os.path.expanduser("~"), ".cache", "claude-plugins", "video-summarizer", "models"),
 )
 
 

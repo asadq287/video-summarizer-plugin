@@ -16,8 +16,11 @@ import os
 import time
 from pathlib import Path
 
-LOG_DIR = Path.home() / "video-summarizer-logs"
-LOG_DIR.mkdir(exist_ok=True)
+LOG_DIR = Path(os.environ.get(
+    "VIDEO_SUMMARIZER_LOG_DIR",
+    str(Path.home() / ".cache" / "claude-plugins" / "video-summarizer" / "logs"),
+))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # One log file per server process
 _process_start = time.strftime("%Y%m%d-%H%M%S")

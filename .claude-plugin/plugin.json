@@ -9,14 +9,9 @@
   "category": "productivity",
   "mcpServers": {
     "video-summarizer": {
-      "command": "uv",
-      "args": ["run", "${CLAUDE_PLUGIN_ROOT}/server.py"],
-      "cwd": "${CLAUDE_PLUGIN_ROOT}",
-      "env": {
-        "PYTHONUNBUFFERED": "1",
-        "UV_PROJECT_ENVIRONMENT": "~/.cache/claude-plugins/video-summarizer/.venv",
-        "UV_CACHE_DIR": "~/.cache/claude-plugins/video-summarizer/cache"
-      }
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bootstrap.sh"],
+      "cwd": "${CLAUDE_PLUGIN_ROOT}"
     }
   },
   "userConfig": {
