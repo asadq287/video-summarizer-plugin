@@ -17,13 +17,19 @@ _model: WhisperModel | None = None
 TRANSCRIBE_TIMEOUT = 300  # 5 minutes max for transcription
 
 
+MODELS_DIR = os.path.join(
+    os.path.expanduser("~"), ".cache", "claude-plugins", "video-summarizer", "models"
+)
+
+
 def _get_model() -> WhisperModel:
     """Load the whisper model once and cache it."""
     global _model
     if _model is None:
+        os.makedirs(MODELS_DIR, exist_ok=True)
         log("whisper", "Loading model (first call)...")
         timer_start("model-load")
-        _model = WhisperModel("base.en", compute_type="int8")
+        _model = WhisperModel("base.en", compute_type="int8", download_root=MODELS_DIR)
         elapsed = timer_end("model-load")
         log("whisper", "Model loaded", elapsed=f"{elapsed:.1f}s")
     return _model

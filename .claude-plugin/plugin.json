@@ -13,7 +13,9 @@
       "args": ["run", "${CLAUDE_PLUGIN_ROOT}/server.py"],
       "cwd": "${CLAUDE_PLUGIN_ROOT}",
       "env": {
-        "PYTHONUNBUFFERED": "1"
+        "PYTHONUNBUFFERED": "1",
+        "UV_PROJECT_ENVIRONMENT": "~/.cache/claude-plugins/video-summarizer/.venv",
+        "UV_CACHE_DIR": "~/.cache/claude-plugins/video-summarizer/cache"
       }
     }
   },
