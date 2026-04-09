@@ -2,7 +2,10 @@
   "mcpServers": {
     "video-summarizer": {
       "command": "uv",
-      "args": ["run", "server.py"]
+      "args": ["run", "server.py"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
     }
   }
 }

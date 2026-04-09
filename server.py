@@ -11,6 +11,8 @@ import tempfile
 import uuid
 import concurrent.futures
 
+from logger import log, timer_start, timer_end, LOG_FILE
+
 # Load .env from the project root before anything reads env vars
 _env_path = pathlib.Path(__file__).parent / ".env"
 if _env_path.exists():
@@ -52,10 +54,25 @@ def _maybe_gemini_hint() -> str:
     )
 
 
+log("server", "Server ready", engine=_transcription_engine(), timeout=TOOL_TIMEOUT, log_file=str(LOG_FILE))
+
+
 def _run_pipeline(url: str, video_path: str) -> str:
     """Download and transcribe — runs in a thread with timeout."""
+    timer_start("download")
+    log("pipeline", "Starting download", url=url, dest=video_path)
     download_video(url, video_path)
-    return transcribe_video(video_path)
+    dl_time = timer_end("download")
+    size_mb = os.path.getsize(video_path) / (1024 * 1024) if os.path.exists(video_path) else 0
+    log("pipeline", "Download complete", elapsed=f"{dl_time:.1f}s", size=f"{size_mb:.1f}MB")
+
+    timer_start("transcribe")
+    log("pipeline", "Starting transcription")
+    transcript = transcribe_video(video_path)
+    tr_time = timer_end("transcribe")
+    log("pipeline", "Transcription complete", elapsed=f"{tr_time:.1f}s", chars=len(transcript))
+
+    return transcript
 
 
 @mcp.tool()
@@ -76,6 +93,8 @@ def summarize_video(url: str) -> str:
 
     platform = detect_platform(url)
     request_id = uuid.uuid4().hex[:8]
+    log("summarize", f"Request {request_id} started", platform=platform, url=url)
+    timer_start(f"tool-{request_id}")
     temp_dir = os.path.join(tempfile.gettempdir(), f"video-summarizer-{request_id}")
     os.makedirs(temp_dir, exist_ok=True)
     video_path = os.path.join(temp_dir, "video.mp4")
@@ -86,13 +105,19 @@ def summarize_video(url: str) -> str:
             try:
                 transcript = future.result(timeout=TOOL_TIMEOUT)
             except concurrent.futures.TimeoutError:
+                log("summarize", f"Request {request_id} TIMED OUT", after=f"{TOOL_TIMEOUT}s")
                 return f"Error processing {platform}: timed out after {TOOL_TIMEOUT}s"
 
+        tool_time = timer_end(f"tool-{request_id}")
+
         if len(transcript) < 5:
+            log("summarize", f"Request {request_id} empty transcript", elapsed=f"{tool_time:.1f}s")
             return (
                 f"Transcription completed but no speech was detected in this {platform}. "
                 "The video may be music-only or contain no spoken content."
             )
+
+        log("summarize", f"Request {request_id} SUCCESS", elapsed=f"{tool_time:.1f}s", chars=len(transcript))
 
         return "\n".join([
             f"**Source:** {platform}",
@@ -113,6 +138,8 @@ def summarize_video(url: str) -> str:
         ]) + _maybe_gemini_hint()
 
     except Exception as e:
+        tool_time = timer_end(f"tool-{request_id}")
+        log("summarize", f"Request {request_id} EXCEPTION", elapsed=f"{tool_time:.1f}s", error=str(e))
         return f"Error processing {platform}: {e}"
 
     finally:
@@ -146,6 +173,8 @@ def transcribe_only(url: str) -> str:
 
     platform = detect_platform(url)
     request_id = uuid.uuid4().hex[:8]
+    log("transcribe_only", f"Request {request_id} started", platform=platform, url=url)
+    timer_start(f"tool-{request_id}")
     temp_dir = os.path.join(tempfile.gettempdir(), f"video-summarizer-{request_id}")
     os.makedirs(temp_dir, exist_ok=True)
     video_path = os.path.join(temp_dir, "video.mp4")
@@ -156,17 +185,25 @@ def transcribe_only(url: str) -> str:
             try:
                 transcript = future.result(timeout=TOOL_TIMEOUT)
             except concurrent.futures.TimeoutError:
+                log("transcribe_only", f"Request {request_id} TIMED OUT", after=f"{TOOL_TIMEOUT}s")
                 return f"Error processing {platform}: timed out after {TOOL_TIMEOUT}s"
 
+        tool_time = timer_end(f"tool-{request_id}")
+
         if len(transcript) < 5:
+            log("transcribe_only", f"Request {request_id} empty transcript", elapsed=f"{tool_time:.1f}s")
             return (
                 f"No speech detected in this {platform}. "
                 "The video may be music-only or contain no spoken content."
             )
 
+        log("transcribe_only", f"Request {request_id} SUCCESS", elapsed=f"{tool_time:.1f}s", chars=len(transcript))
+
         return transcript + _maybe_gemini_hint()
 
     except Exception as e:
+        tool_time = timer_end(f"tool-{request_id}")
+        log("transcribe_only", f"Request {request_id} EXCEPTION", elapsed=f"{tool_time:.1f}s", error=str(e))
         return f"Error processing {platform}: {e}"
 
     finally:

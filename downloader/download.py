@@ -7,6 +7,8 @@ import os
 import concurrent.futures
 import yt_dlp
 
+from logger import log, timer_start, timer_end
+
 
 COOKIES_DIR = os.path.join(os.environ.get("HOME", ""), ".claude-browser")
 MIN_VIDEO_SIZE = 50_000  # 50KB minimum for a valid video
@@ -56,6 +58,9 @@ def download_video(url: str, output_path: str) -> str:
     if not is_supported_url(url):
         raise ValueError(f"Unsupported URL. Must be from instagram.com or youtube.com/youtu.be: {url}")
 
+    platform = "instagram" if is_instagram(url) else "youtube"
+    log("download", f"Preparing {platform} download", url=url)
+
     ydl_opts = {
         "outtmpl": output_path,
         "merge_output_format": "mp4",
@@ -66,20 +71,31 @@ def download_video(url: str, output_path: str) -> str:
 
     # Instagram requires browser cookies for authentication
     if is_instagram(url):
+        log("download", "Loading Instagram cookies", cookie_dir=COOKIES_DIR)
         ydl_opts["cookiesfrombrowser"] = ("chrome", None, None, COOKIES_DIR)
 
+    timer_start("yt-dlp")
+    log("download", "yt-dlp starting")
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(_do_download, url, output_path, ydl_opts)
         try:
             future.result(timeout=DOWNLOAD_TIMEOUT)
         except concurrent.futures.TimeoutError:
+            elapsed = timer_end("yt-dlp")
+            log("download", "TIMED OUT", elapsed=f"{elapsed:.1f}s")
             raise RuntimeError(f"Download timed out after {DOWNLOAD_TIMEOUT}s")
+    elapsed = timer_end("yt-dlp")
+    log("download", "yt-dlp finished", elapsed=f"{elapsed:.1f}s")
 
     if not os.path.exists(output_path):
+        log("download", "FAIL: no file produced")
         raise RuntimeError("Download completed but no file was produced")
 
-    if os.path.getsize(output_path) < MIN_VIDEO_SIZE:
+    size = os.path.getsize(output_path)
+    if size < MIN_VIDEO_SIZE:
+        log("download", "FAIL: file too small", size=size)
         os.unlink(output_path)
         raise RuntimeError("Downloaded file is too small — likely corrupted or empty")
 
+    log("download", "Download OK", size=f"{size / (1024*1024):.1f}MB", path=output_path)
     return output_path

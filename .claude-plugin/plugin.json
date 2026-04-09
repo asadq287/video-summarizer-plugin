@@ -1,7 +1,7 @@
 {
   "name": "video-summarizer",
   "description": "Download and transcribe Instagram Reels & YouTube videos, extracting key lessons and actionable steps. Supports Gemini Flash (cloud) or Whisper (local) transcription.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {
     "name": "Asad Qasim"
   },
@@ -13,8 +13,14 @@
       "args": ["run", "${CLAUDE_PLUGIN_ROOT}/server.py"],
       "cwd": "${CLAUDE_PLUGIN_ROOT}",
       "env": {
-        "GEMINI_API_KEY": ""
+        "PYTHONUNBUFFERED": "1"
       }
+    }
+  },
+  "userConfig": {
+    "GEMINI_API_KEY": {
+      "description": "Optional Gemini API key for cloud-based transcription. Leave empty to use local Whisper instead. Get one at https://aistudio.google.com/apikey",
+      "sensitive": true
     }
   }
 }
