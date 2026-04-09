@@ -5,4 +5,5 @@ dist/
 *.egg-info/
 .DS_Store
 .env
+.mcp.json
 test_pipeline.py
