@@ -1,17 +1,17 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "asad-qasim-plugins",
+  "description": "Video summarization and transcription tools for Claude",
   "owner": {
     "name": "Asad Qasim"
-  },
-  "metadata": {
-    "description": "Video summarization and transcription tools for Claude"
   },
   "plugins": [
     {
       "name": "video-summarizer",
-      "source": ".",
+      "source": "./",
       "description": "Download and transcribe Instagram Reels & YouTube videos. Supports Gemini Flash (cloud) or Whisper (local) transcription.",
-      "version": "1.1.0",
+      "version": "1.2.0",
+      "category": "productivity",
       "keywords": ["video", "transcription", "youtube", "instagram"]
     }
   ]
